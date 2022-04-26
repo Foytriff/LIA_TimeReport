@@ -1,17 +1,16 @@
 package se.pulsen.lia_timereportproject.Views;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
-import org.springframework.beans.factory.annotation.Autowired;
-import se.pulsen.lia_timereportproject.Entities.Customer;
-import se.pulsen.lia_timereportproject.Entities.Timereport;
 import se.pulsen.lia_timereportproject.Services.*;
 
-@Route(value = "", layout = MainView.class)
+import javax.annotation.security.PermitAll;
+
+
+@Route(value = "/user", layout = MainView.class)
+@PermitAll
 public class EmployeeView extends VerticalLayout {
     H1 test = new H1("Welcome");
 

@@ -18,6 +18,7 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.DataProvider;
 import se.pulsen.lia_timereportproject.Entities.*;
 import se.pulsen.lia_timereportproject.Services.*;
+import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class ReportForm extends FormLayout {
     DatePicker reportDate = new DatePicker("Date for Work Preformed");
     TextArea comment = new TextArea("Comment:");
     Button saveButton = new Button("Save");
+    Employee loggedInEmployee = null;
     int selectionLevel = 0;
 
     public ReportForm (CustomerService customerService, ProjectService projectService, ActivityService activityService, TimereportService timereportService, EmployeeService employeeService){
@@ -44,6 +46,12 @@ public class ReportForm extends FormLayout {
         this.activityService = activityService;
         this.timereportService = timereportService;
         this.employeeService = employeeService;
+
+        if (PrincipalUtils.isAuthenticated()){
+            loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getName());
+            name.setValue(loggedInEmployee.getEmployeeName());
+            name.setReadOnly(true);
+        }
 
         // Provide selected class to determine behaviour
         selectionsForActivity.addValueChangeListener(e -> {
@@ -54,6 +62,7 @@ public class ReportForm extends FormLayout {
         saveButton.addClickListener(e -> onSave());
         Button undo = new Button("Reset");
         undo.getElement().setAttribute("size", "small");
+        undo.addClickListener(e -> resetActivitySelection());
         HorizontalLayout activity = new HorizontalLayout(selectionsForActivity, undo);
 
         selectionsForActivity.setItems(customerService.findAll());
@@ -65,13 +74,15 @@ public class ReportForm extends FormLayout {
 
     private void onSave() {
 
-        Employee loggedInnEmployee = employeeService.findEmployeeByName(name.getValue());
         double amountHours = this.amountHours.getValue();
         String reportDate = this.reportDate.getValue().toString();
         String activityID = activityService.activityIDFromName(this.selectionsForActivity.getValue().toString());
         String comment = this.comment.getValue();
 
-        Timereport timereport = new Timereport(loggedInnEmployee, amountHours, reportDate, comment, activityID);
+        Timereport timereport = new Timereport(loggedInEmployee, amountHours, reportDate, comment, activityID);
+
+        if(loggedInEmployee == null)
+            return;
         timereportService.save(timereport);
         Notification notification = Notification.show("Report submitted!");
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -113,14 +124,15 @@ public class ReportForm extends FormLayout {
 
         if (selection.equals(Customer.class)){
             Customer customer = (Customer) field.getValue();
+            Notification.show(customer.getCustomerID());
             selectionsForActivity.setItems(projectService.projectsForCustomer(customer.getCustomerID()));
 
-            field.setLabel(customer.getCustomerName());
+            field.setLabel(customer.getCustomerName().toUpperCase());
         } else if (selection.equals(Project.class)){
             Project project = (Project) field.getValue();
             selectionsForActivity.setItems(activityService.findActivitiesForProject(project.getProjectID()));
 
-            field.setLabel(field.getLabel() + ": " + project.getProjectName());
+            field.setLabel(field.getLabel() + ": " + project.getProjectName().toUpperCase());
         } else if (selection.equals(Activity.class)){
             Activity activity = (Activity) field.getValue();
 
@@ -128,9 +140,9 @@ public class ReportForm extends FormLayout {
             if(amntSelections.length == 3){
                 int lastSeparatorIndex = field.getLabel().lastIndexOf(':');
                 String subString = field.getLabel().substring(lastSeparatorIndex);
-                field.setLabel(field.getLabel().replace(subString, ": " + activity.getActivityName()));
+                field.setLabel(field.getLabel().replace(subString, ": " + activity.getActivityName().toUpperCase()));
             } else {
-                field.setLabel(field.getLabel() + ": " + activity.getActivityName());
+                field.setLabel(field.getLabel() + ": " + activity.getActivityName().toUpperCase());
             }
         }
 
