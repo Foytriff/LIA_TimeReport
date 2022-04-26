@@ -16,7 +16,7 @@ public class Employee {
     String username;
     @Column
     String pass;
-    @OneToMany(mappedBy = "TimerapportID")
+    @OneToMany(mappedBy = "timereportID")
     List<Timereport> myRapports;
 
     public Employee(String employeeName, String phone, String username){

@@ -15,4 +15,7 @@ public class EmployeeService {
         return employeeRepo.save(employee);
     }
 
+    public Employee findEmployeeByName(String name){
+        return employeeRepo.findEmployeeByEmployeeName(name).orElseThrow();
+    }
 }

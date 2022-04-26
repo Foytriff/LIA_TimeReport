@@ -18,4 +18,9 @@ public class CustomerService {
         return customerRepo.findAll();
     }
 
+    public String customerIDFromName(String custName){
+        Customer customer = customerRepo.findCustomerByCustomerName(custName).orElseThrow();
+        return  customer.getCustomerID();
+    }
+
 }

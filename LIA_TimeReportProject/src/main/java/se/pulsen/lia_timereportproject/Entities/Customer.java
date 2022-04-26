@@ -6,36 +6,36 @@ import javax.persistence.Id;
 @Entity
 public class Customer {
     @Id
-    String CustomerID;
-    String CustomerName;
-    String CustomerLocation;
+    String customerID;
+    String customerName;
+    String customerlocation;
 
     public String getCustomerID() {
-        return CustomerID;
+        return customerID;
     }
 
     public void setCustomerID(String customerID) {
-        CustomerID = customerID;
+        this.customerID = customerID;
     }
 
     public String getCustomerName() {
-        return CustomerName;
+        return customerName;
     }
 
     public void setCustomerName(String customerName) {
-        CustomerName = customerName;
+        this.customerName = customerName;
     }
 
-    public String getCustomerLocation() {
-        return CustomerLocation;
+    public String getCustomerlocation() {
+        return customerlocation;
     }
 
-    public void setCustomerLocation(String customerLocation) {
-        CustomerLocation = customerLocation;
+    public void setCustomerlocation(String customerlocation) {
+        this.customerlocation = customerlocation;
     }
 
     @Override
     public String toString() {
-        return CustomerName;
+        return customerName;
     }
 }

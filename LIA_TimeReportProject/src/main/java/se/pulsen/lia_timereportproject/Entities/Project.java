@@ -6,42 +6,42 @@ import javax.persistence.Id;
 @Entity
 public class Project {
     @Id
-    String ProjectID;
-    String ProjectName;
-    String ProjectDescription;
+    String projectID;
+    String projectName;
+    String projectDescription;
 
-    String CustomerID;
+    String customerID;
 
     public String getProjectID() {
-        return ProjectID;
+        return projectID;
     }
 
     public String getProjectName() {
-        return ProjectName;
+        return projectName;
     }
 
     public void setProjectName(String projectName) {
-        ProjectName = projectName;
+        this.projectName = projectName;
     }
 
     public String getProjectDescription() {
-        return ProjectDescription;
+        return projectDescription;
     }
 
     public void setProjectDescription(String projectDescription) {
-        ProjectDescription = projectDescription;
+        this.projectDescription = projectDescription;
     }
 
     public String getCustomerID() {
-        return CustomerID;
+        return customerID;
     }
 
     public void setCustomerID(String customerID) {
-        CustomerID = customerID;
+        this.customerID = customerID;
     }
 
     @Override
     public String toString() {
-        return ProjectName;
+        return projectName;
     }
 }

@@ -1,41 +1,66 @@
 package se.pulsen.lia_timereportproject.Entities;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import org.hibernate.id.GUIDGenerator;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @Entity
 public class Timereport {
     @Id
-    String TimerapportID;
-    String RapportDate;
-    String amountHours;
+    UUID timereportID;
+    @Column(name = "RapportDate")
+    String reportDate;
+    double amountHours;
     String comment;
-    String SubmitDate;
+    String submitDate;
 
-    String ActivityID;
+    String activityID;
     @ManyToOne
     @JoinColumn(name = "employeeID")
     Employee employee;
 
-    public String getTimerapportID() {
-        return TimerapportID;
+
+    public Timereport(Employee employee, double amountHours, String reportDate, String comment, String activityID){
+        this.employee = employee;
+        this.amountHours = amountHours;
+        this.reportDate = reportDate;
+        this.comment = comment;
+        this.activityID = activityID;
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        LocalDateTime now = LocalDateTime.now();
+
+        this.submitDate = dtf.format(now);
+
+        this.comment = comment;
+
+        this.timereportID = UUID.randomUUID();
+
+    }
+    public Timereport(){
+
     }
 
-    public String getRapportDate() {
-        return RapportDate;
+    public String getTimereportID() {
+        return timereportID.toString();
     }
 
-    public void setRapportDate(String rapportDate) {
-        RapportDate = rapportDate;
+    public String getReportDate() {
+        return reportDate;
     }
 
-    public String getAmountHours() {
+    public void setReportDate(String rapportDate) {
+        this.reportDate = rapportDate;
+    }
+
+    public double getAmountHours() {
         return amountHours;
     }
 
-    public void setAmountHours(String amountHours) {
+    public void setAmountHours(double amountHours) {
         this.amountHours = amountHours;
     }
 
@@ -48,26 +73,26 @@ public class Timereport {
     }
 
     public String getSubmitDate() {
-        return SubmitDate;
+        return submitDate;
     }
 
     public void setSubmitDate(String submitDate) {
-        SubmitDate = submitDate;
+        this.submitDate = submitDate;
     }
 
     public String getActivityID() {
-        return ActivityID;
+        return activityID;
     }
 
     public void setActivityID(String activityID) {
-        ActivityID = activityID;
+        this.activityID = activityID;
     }
 
-    public Employee getEmployee() {
-        return employee;
+    public String getEmployeeID() {
+        return employee.getEmployeeID();
     }
 
-    public void setEmployeeID(Employee employee) {
+    public void setEmployee(Employee employee) {
         this.employee = employee;
     }
 }

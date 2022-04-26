@@ -11,4 +11,8 @@ import java.util.Optional;
 public interface ActivityRepo extends JpaRepository<Activity, Integer> {
 
     List<Activity> findActivitiesByactivityName(String name);
+
+    List<Activity> findActivitiesByProjectID(String projecID);
+
+    Optional<Activity> findActivityByActivityName(String name);
 }

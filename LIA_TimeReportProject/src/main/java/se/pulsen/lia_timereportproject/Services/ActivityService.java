@@ -17,4 +17,13 @@ public class ActivityService {
         return activityRepo.findAll();
     }
 
+    public List<Activity> findActivitiesForProject(String projectID){
+        return activityRepo.findActivitiesByProjectID(projectID);
+    }
+
+    public String activityIDFromName(String name){
+        Activity activity = activityRepo.findActivityByActivityName(name).orElseThrow();
+        return activity.getActivityID();
+    }
+
 }

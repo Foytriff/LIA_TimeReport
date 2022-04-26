@@ -8,9 +8,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 import org.springframework.beans.factory.annotation.Autowired;
 import se.pulsen.lia_timereportproject.Entities.Customer;
-import se.pulsen.lia_timereportproject.Services.ActivityService;
-import se.pulsen.lia_timereportproject.Services.CustomerService;
-import se.pulsen.lia_timereportproject.Services.ProjectService;
+import se.pulsen.lia_timereportproject.Entities.Timereport;
+import se.pulsen.lia_timereportproject.Services.*;
 
 @Route(value = "", layout = MainView.class)
 public class EmployeeView extends VerticalLayout {
@@ -20,21 +19,23 @@ public class EmployeeView extends VerticalLayout {
     CustomerService customerService;
     ProjectService projectService;
     ActivityService activityService;
+    TimereportService timereportService;
+    EmployeeService employeeService;
 
-    public EmployeeView(CustomerService customerService, ProjectService projectService, ActivityService activityService){
+    public EmployeeView(CustomerService customerService, ProjectService projectService, ActivityService activityService, TimereportService timereportService, EmployeeService employeeService){
         this.customerService = customerService;
         this.projectService = projectService;
         this.activityService = activityService;
+        this.timereportService = timereportService;
+        this.employeeService = employeeService;
 
-        ReportForm reportForm = new ReportForm(customerService, projectService, activityService);
+        ReportForm reportForm = new ReportForm(customerService, projectService, activityService, timereportService, employeeService);
         Div reportContainer = new Div(reportForm);
 
         reportContainer.setClassName("form_container");
 
         this.setAlignItems(Alignment.CENTER);
 
-        Button save = new Button("Save");
-
-        add(test, reportContainer, save);
+        add(test, reportContainer);
     }
 }

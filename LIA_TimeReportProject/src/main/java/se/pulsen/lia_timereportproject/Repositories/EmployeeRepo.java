@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+@Repository
 public interface EmployeeRepo extends JpaRepository<Employee, Integer> {
-
+    Optional<Employee> findEmployeeByEmployeeName(String name);
 }

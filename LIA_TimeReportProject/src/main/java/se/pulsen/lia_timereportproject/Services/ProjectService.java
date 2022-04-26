@@ -15,4 +15,13 @@ public class ProjectService {
     public List<Project> findAll(){
         return projectRepo.findAll();
     }
+
+    public List<Project> projectsForCustomer(String customerID){
+        return projectRepo.findProjectsByCustomerID(customerID);
+    }
+
+    public String projectIDFromName(String projectName){
+        Project project = projectRepo.findProjectByProjectName(projectName).orElseThrow();
+        return project.getProjectID();
+    }
 }
