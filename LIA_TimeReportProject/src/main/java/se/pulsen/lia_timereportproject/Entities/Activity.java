@@ -1,8 +1,6 @@
 package se.pulsen.lia_timereportproject.Entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 public class Activity {
@@ -15,11 +13,16 @@ public class Activity {
     String startDate;
     @Column
     String endDate;
-    @Column
-    String projectID;
+    @ManyToOne
+    @JoinColumn(name = "projectID")
+    Project project;
 
     public String getActivityID() {
         return activityID;
+    }
+
+    public void setActivityIDForHomeUse(String id){
+        activityID = id;
     }
 
     public String getActivityName() {
@@ -46,12 +49,12 @@ public class Activity {
         this.endDate = endDate;
     }
 
-    public String getProjectID() {
-        return projectID;
+    public Project getProject() {
+        return project;
     }
 
-    public void setProjectID(String projectID) {
-        this.projectID = projectID;
+    public void setProject(Project project) {
+        this.project = project;
     }
 
     @Override

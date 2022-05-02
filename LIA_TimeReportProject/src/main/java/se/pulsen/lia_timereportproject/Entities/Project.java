@@ -1,7 +1,7 @@
 package se.pulsen.lia_timereportproject.Entities;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class Project {
@@ -11,9 +11,15 @@ public class Project {
     String projectDescription;
 
     String customerID;
+    @OneToMany(mappedBy = "activityID")
+    List<Activity> activities;
 
     public String getProjectID() {
         return projectID;
+    }
+
+    public void setProjectIDForHomeUse(String id){
+        this.projectID = id;
     }
 
     public String getProjectName() {

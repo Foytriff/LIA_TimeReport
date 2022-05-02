@@ -88,7 +88,7 @@ public class Timereport {
         this.activityID = activityID;
     }
 
-    public String getEmployeeID() {
+    public UUID getEmployeeID() {
         return employee.getEmployeeID();
     }
 

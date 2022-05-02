@@ -16,6 +16,10 @@ public class PrincipalUtils {
         return !SecurityContextHolder.getContext().getAuthentication().getName().equalsIgnoreCase("anonymousUser");
     }
 
+    public static String getRole(){
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
+    }
+
     public static void logout(){
         new SecurityContextLogoutHandler().logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
         UI.getCurrent().navigate(LoginView.class);

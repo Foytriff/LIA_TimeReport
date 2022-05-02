@@ -2,12 +2,13 @@ package se.pulsen.lia_timereportproject.Entities;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "Employee")
 public class Employee {
     @Id
-    String employeeID;
+    UUID employeeID;
     @Column
     String employeeName;
     @Column
@@ -18,6 +19,14 @@ public class Employee {
     String pass;
     @OneToMany(mappedBy = "timereportID")
     List<Timereport> myRapports;
+
+    public Employee(String employeeName, String phone, String username, String pass){
+        this.employeeName = employeeName;
+        this.phone = phone;
+        this.username = username;
+        this.pass = pass;
+        this.employeeID = UUID.randomUUID();
+    }
 
     public Employee(String employeeName, String phone, String username){
         this.employeeName = employeeName;
@@ -30,8 +39,12 @@ public class Employee {
 
     }
 
-    public String getEmployeeID() {
+    public UUID getEmployeeID() {
         return employeeID;
+    }
+
+    public void setEmployeeIDForHomeUse(UUID id){
+        employeeID = id;
     }
 
     public String getEmployeeName() {

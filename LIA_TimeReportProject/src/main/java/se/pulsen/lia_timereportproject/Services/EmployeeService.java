@@ -6,6 +6,8 @@ import se.pulsen.lia_timereportproject.Entities.Employee;
 import se.pulsen.lia_timereportproject.Repositories.EmployeeRepo;
 
 import javax.annotation.security.PermitAll;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EmployeeService {
@@ -25,8 +27,16 @@ public class EmployeeService {
         return employeeRepo.findEmployeeByUsername(username).orElseThrow();
     }
 
-    public String getIDfromUsername(String username){
+    public void deleteEmployee(Employee employee){
+        employeeRepo.delete(employee);
+    }
+
+    public UUID getIDfromUsername(String username){
         Employee employee = this.findEmployeeByUsername(username);
         return employee.getEmployeeID();
+    }
+
+    public List<Employee> findAll() {
+        return employeeRepo.findAll();
     }
 }

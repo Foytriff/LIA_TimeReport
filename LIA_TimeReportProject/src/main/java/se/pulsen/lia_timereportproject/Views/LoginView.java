@@ -24,9 +24,11 @@ public class LoginView extends Div implements BeforeEnterListener {
 
     @Override
     public void beforeEnter(BeforeEnterEvent beforeEnterEvent) {
-        if(beforeEnterEvent.getLocation().getQueryParameters().getParameters().containsKey("error")){
+        if(beforeEnterEvent.getLocation()
+                .getQueryParameters()
+                .getParameters()
+                .containsKey("error")) {
             loginOverlay.setError(true);
-            add(loginOverlay);
         }
     }
 }

@@ -4,6 +4,7 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -13,14 +14,12 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.datepicker.DatePicker;
-import com.vaadin.flow.data.binder.BeanValidationBinder;
-import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.provider.DataProvider;
 import se.pulsen.lia_timereportproject.Entities.*;
 import se.pulsen.lia_timereportproject.Services.*;
 import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 
 public class ReportForm extends FormLayout {
@@ -38,7 +37,13 @@ public class ReportForm extends FormLayout {
     TextArea comment = new TextArea("Comment:");
     Button saveButton = new Button("Save");
     Employee loggedInEmployee = null;
-    int selectionLevel = 0;
+    Timereport editedReport;
+    ReportsView reportsView;
+
+    public ReportForm (CustomerService customerService, ProjectService projectService, ActivityService activityService, TimereportService timereportService, EmployeeService employeeService, ReportsView reportsView){
+        this(customerService, projectService, activityService, timereportService, employeeService);
+        this.reportsView = reportsView;
+    }
 
     public ReportForm (CustomerService customerService, ProjectService projectService, ActivityService activityService, TimereportService timereportService, EmployeeService employeeService){
         this.customerService = customerService;
@@ -46,6 +51,7 @@ public class ReportForm extends FormLayout {
         this.activityService = activityService;
         this.timereportService = timereportService;
         this.employeeService = employeeService;
+        this.editedReport = null;
 
         if (PrincipalUtils.isAuthenticated()){
             loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getName());
@@ -76,17 +82,38 @@ public class ReportForm extends FormLayout {
 
         double amountHours = this.amountHours.getValue();
         String reportDate = this.reportDate.getValue().toString();
-        String activityID = activityService.activityIDFromName(this.selectionsForActivity.getValue().toString());
+        Activity activity = (Activity) this.selectionsForActivity.getValue(); //OBS!
+        String activityID = activity.getActivityID();
         String comment = this.comment.getValue();
 
-        Timereport timereport = new Timereport(loggedInEmployee, amountHours, reportDate, comment, activityID);
+        Timereport newReport = new Timereport(loggedInEmployee, amountHours, reportDate, comment, activityID);
 
         if(loggedInEmployee == null)
             return;
-        timereportService.save(timereport);
-        Notification notification = Notification.show("Report submitted!");
-        notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        clearFields();
+
+        if(editedReport == null){
+            timereportService.save(newReport);
+            Notification notification = Notification.show("Report submitted!");
+            notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            clearFields();
+        } else {
+            editedReport.setAmountHours(this.amountHours.getValue());
+            editedReport.setReportDate(this.reportDate.getValue().toString());
+            editedReport.setActivityID(activity.getActivityID());
+            editedReport.setComment(this.comment.getValue());
+            timereportService.save(editedReport);
+            Notification.show("Report Updated!");
+
+            this.getParent().ifPresent(component -> {
+                            if(component instanceof Dialog){
+                                ((Dialog) component).close();
+                            }
+                        });
+            if(reportsView != null)
+                reportsView.renderReports();
+            editedReport = null;
+        }
+
     }
 
     private void clearFields() {
@@ -100,21 +127,11 @@ public class ReportForm extends FormLayout {
     private void resetActivitySelection() {
         selectionsForActivity.setLabel("");
         selectionsForActivity.setItems(customerService.findAll());
-        selectionLevel = 0;
     }
-
-
-
-
-
-
-
-
-
-
 
     private<T> void updateLabel(HasValue.ValueChangeEvent e, ComboBox<T> field) {
 
+        // OBS: ändra så att etiketten uppdateras korrekt oavsett selektionsnivå (man ska inte behöva välja KUND - PROJ - AKT, i den ordningen)
         if(field.isEmpty())
             return;
 
@@ -130,7 +147,7 @@ public class ReportForm extends FormLayout {
             field.setLabel(customer.getCustomerName().toUpperCase());
         } else if (selection.equals(Project.class)){
             Project project = (Project) field.getValue();
-            selectionsForActivity.setItems(activityService.findActivitiesForProject(project.getProjectID()));
+            selectionsForActivity.setItems(activityService.findActivitiesForProject(project));
 
             field.setLabel(field.getLabel() + ": " + project.getProjectName().toUpperCase());
         } else if (selection.equals(Activity.class)){
@@ -149,4 +166,31 @@ public class ReportForm extends FormLayout {
 
     }
 
+    public void setValues(Timereport timereport) {
+        this.editedReport = timereport;
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate localDate = LocalDate.parse(timereport.getReportDate(), dtf);
+
+        reportDate.setReadOnly(true);
+        amountHours.setReadOnly(true);
+        comment.setReadOnly(true);
+
+        reportDate.setValue(localDate);
+        amountHours.setValue(timereport.getAmountHours());
+        comment.setValue(timereport.getComment());
+        selectionsForActivity.setValue(activityService.getActivityFromID(timereport.getActivityID()));
+        remove(saveButton);
+        Button editButton = new Button("Edit");
+        editButton.addClickListener(evt -> editReport(editButton));
+        add(editButton);
+    }
+
+    private void editReport(Button editButton) {
+        reportDate.setReadOnly(false);
+        amountHours.setReadOnly(false);
+        comment.setReadOnly(false);
+        remove(editButton);
+        add(saveButton);
+    }
 }

@@ -20,8 +20,8 @@ public class ProjectService {
         return projectRepo.findProjectsByCustomerID(customerID);
     }
 
-    public String projectIDFromName(String projectName){
-        Project project = projectRepo.findProjectByProjectName(projectName).orElseThrow();
-        return project.getProjectID();
+    public String getProjectNameFromProjectID(String projectID){
+        Project project = projectRepo.findProjectByProjectID(projectID).orElseThrow();
+        return project.getProjectName();
     }
 }
