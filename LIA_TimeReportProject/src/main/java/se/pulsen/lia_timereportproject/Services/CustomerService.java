@@ -18,6 +18,10 @@ public class CustomerService {
         return customerRepo.findAll();
     }
 
+    public Customer getCustomerFromID(String customerID){
+        return customerRepo.findCustomerByCustomerID(customerID).orElseThrow();
+    }
+
     public String customerIDFromName(String custName){
         Customer customer = customerRepo.findCustomerByCustomerName(custName).orElseThrow();
         return  customer.getCustomerID();

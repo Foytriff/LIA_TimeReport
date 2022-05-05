@@ -19,12 +19,17 @@ public class EmployeeService {
         return employeeRepo.save(employee);
     }
 
-    public Employee findEmployeeByID(String username){
-        return employeeRepo.findEmployeeByEmployeeID(username).orElseThrow();
+    public String getEmployeeNameFromID(UUID employeeID){
+        Employee employee = employeeRepo.findEmployeeByEmployeeID(employeeID).orElseThrow();
+        return employee.getEmployeeName();
     }
 
     public Employee findEmployeeByUsername(String username){
         return employeeRepo.findEmployeeByUsername(username).orElseThrow();
+    }
+
+    public Employee getEmployeeFromID(UUID employeeID){
+        return employeeRepo.findEmployeeByEmployeeID(employeeID).orElseThrow();
     }
 
     public void deleteEmployee(Employee employee){

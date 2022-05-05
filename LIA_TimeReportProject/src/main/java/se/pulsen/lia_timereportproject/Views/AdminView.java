@@ -42,6 +42,7 @@ public class AdminView extends VerticalLayout {
         employeeGrid.addComponentColumn(employee -> {
             Button deleteButton = new Button(new Icon(VaadinIcon.CLOSE), evt -> {
                 employeeService.deleteEmployee(employee);
+                updateGrid(employeeService);
             });
             deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
             return deleteButton;
@@ -49,7 +50,7 @@ public class AdminView extends VerticalLayout {
 
         Button newEmployee = new Button("Add New Employee", evt -> addEmployee(employeeService));
 
-        add(employeeGrid, newEmployee   );
+        add(employeeGrid, newEmployee);
     }
 
     private void addEmployee(EmployeeService employeeService) {
@@ -64,12 +65,17 @@ public class AdminView extends VerticalLayout {
         Button createEmployee = new Button("Register", evt -> {
             saveNewEmployee(empName, empPhone, empUsername, empPassword, employeeService);
             dialog.close();
+            updateGrid(employeeService);
         });
 
         empform.add(empName, empPhone, empUsername, empPassword, createEmployee);
         dialog.add(empform);
         dialog.open();
 
+    }
+
+    private void updateGrid(EmployeeService employeeService){
+        employeeGrid.setItems(employeeService.findAll());
     }
 
     private Employee saveNewEmployee(TextField empName, NumberField empPhone, TextField empUsername, PasswordField empPassword, EmployeeService employeeService) {

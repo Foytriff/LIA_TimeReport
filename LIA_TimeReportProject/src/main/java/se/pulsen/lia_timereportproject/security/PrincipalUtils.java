@@ -8,7 +8,7 @@ import se.pulsen.lia_timereportproject.Views.LoginView;
 
 public class PrincipalUtils {
 
-    public static String getName(){
+    public static String getUsername(){
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
@@ -18,6 +18,10 @@ public class PrincipalUtils {
 
     public static String getRole(){
         return SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
+    }
+
+    public static boolean isAdmin(){
+        return getRole().equals("[ROLE_ADMIN]");
     }
 
     public static void logout(){

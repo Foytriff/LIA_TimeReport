@@ -2,21 +2,22 @@ package se.pulsen.lia_timereportproject.Views;
 
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.dataview.GridListDataView;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
-import org.springframework.context.annotation.Role;
-import org.springframework.security.access.annotation.Secured;
 import se.pulsen.lia_timereportproject.Entities.Employee;
 import se.pulsen.lia_timereportproject.Entities.Timereport;
 import se.pulsen.lia_timereportproject.Services.*;
 import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
 import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
-import java.sql.Time;
 
 @Route(value = "/user/myreports", layout = MainView.class)
-@RolesAllowed("ADMIN")
+@PermitAll
 public class ReportsView extends VerticalLayout {
 
     CustomerService customerService;
@@ -41,11 +42,68 @@ public class ReportsView extends VerticalLayout {
         this.activityService = activityService;
 
         if(PrincipalUtils.isAuthenticated())
-            loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getName());
+            loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getUsername());
 
         if (loggedInEmployee == null)
             return;
 
+        String loggedInRole = PrincipalUtils.getRole();
+
+        switch (loggedInRole){
+            case "[ROLE_ADMIN]":
+                renderAdminView();
+                break;
+            case "[ROLE_USER]":
+                renderEmployeeView();
+                break;
+            default:
+                renderEmployeeView();
+                break;
+        }
+
+        add(grid);
+
+
+    }
+
+    private void renderAdminView(){
+
+        GridListDataView<Timereport> dataView = grid.setItems(timereportService.getReportsAdmin());
+
+        TextField searchField = new TextField();
+        searchField.setWidth("50%");
+        searchField.setPlaceholder("Search");
+        searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
+        searchField.setValueChangeMode(ValueChangeMode.LAZY);
+        searchField.addValueChangeListener(e -> dataView.refreshAll());
+
+        this.add(searchField);
+
+        dataView.addFilter(timereport -> {
+            String searchTerm = searchField.getValue().trim();
+
+            if (searchTerm.isEmpty())
+                return true;
+
+            boolean matchesFullName = matches(employeeService.getEmployeeNameFromID(timereport.getEmployeeID()),
+                    searchTerm);
+            boolean matchesCustomerName = matches(customerService.getCustomerFromID(projectService.getProjectFromID(activityService.getActivityFromID(timereport.getActivityID()).getProject().getProjectID()).getCustomerID()).getCustomerName(), searchTerm);
+
+            return matchesFullName || matchesCustomerName;
+        });
+
+        grid.addColumn(tr -> employeeService.getEmployeeNameFromID(tr.getEmployeeID())).setHeader("Employee:");
+        grid.addColumn(tr -> tr.getAmountHours()).setHeader("Amount of Hours");
+        grid.addColumn(tr -> tr.getReportDate()).setHeader("Report Date:");
+        grid.addColumn(tr -> tr.getSubmitDate()).setHeader("Submitted:");
+
+        grid.getColumns().forEach(column -> column.setSortable(true));
+        grid.setAllRowsVisible(true);
+
+        grid.asSingleSelect().addValueChangeListener(evt -> editReport(evt.getValue()));
+    }
+
+    private void renderEmployeeView(){
         grid.setItems(timereportService.getReportsForEmployee(loggedInEmployee));
 
         grid.addColumn(tr -> queryFromEverywhere.getCustomerNameFromActivityID(tr.getActivityID())).setHeader("Customer:");
@@ -54,12 +112,10 @@ public class ReportsView extends VerticalLayout {
         grid.addColumn(Timereport::getAmountHours).setHeader("Reported Hours:");
         grid.addColumn(Timereport::getReportDate).setHeader("Date of Work:");
 
+        grid.getColumns().forEach(column -> column.setSortable(true));
+        grid.setAllRowsVisible(true);
+
         grid.asSingleSelect().addValueChangeListener(evt -> editReport(evt.getValue()));
-
-
-        add(grid);
-
-
     }
 
     private void editReport(Timereport timereport) {
@@ -78,6 +134,15 @@ public class ReportsView extends VerticalLayout {
     }
 
     public void renderReports(){
-        grid.setItems(timereportService.getReportsForEmployee(loggedInEmployee));
+        if(PrincipalUtils.isAdmin()){
+            grid.setItems(timereportService.getReportsAdmin());
+        } else {
+            grid.setItems(timereportService.getReportsForEmployee(loggedInEmployee));
+        }
+    }
+
+    private boolean matches(String value, String searchTerm) {
+        return searchTerm == null || searchTerm.isEmpty() || value
+                .toLowerCase().contains(searchTerm.toLowerCase());
     }
 }

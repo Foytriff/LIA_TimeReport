@@ -78,4 +78,9 @@ public class Employee {
     public void setPass(String pass) {
         this.pass = pass;
     }
+
+    @Override
+    public String toString(){
+        return employeeName;
+    }
 }

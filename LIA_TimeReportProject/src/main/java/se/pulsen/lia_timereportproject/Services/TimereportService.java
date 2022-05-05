@@ -22,4 +22,12 @@ public class TimereportService {
     public List<Timereport> getReportsForEmployee(Employee employee){
         return timereportRepo.findTimereportsByEmployee(employee);
     }
+
+    public List<Timereport>getTimeSpentOnCustomer(String customerID, String employeeID){
+        return timereportRepo.getTimeSpentOnCustomer(customerID, employeeID);
+    }
+
+    public List<Timereport> getReportsAdmin(){
+        return timereportRepo.findAll();
+    }
 }

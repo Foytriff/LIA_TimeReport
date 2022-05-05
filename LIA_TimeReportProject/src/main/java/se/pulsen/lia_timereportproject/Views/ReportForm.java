@@ -30,12 +30,13 @@ public class ReportForm extends FormLayout {
     TimereportService timereportService;
     EmployeeService employeeService;
 
-    TextField name = new TextField("Employee Name:");
+    ComboBox name = new ComboBox("Employee Name:");
     ComboBox selectionsForActivity = new ComboBox<>("");
     NumberField amountHours = new NumberField("Amount of Hours");
     DatePicker reportDate = new DatePicker("Date for Work Preformed");
     TextArea comment = new TextArea("Comment:");
     Button saveButton = new Button("Save");
+    Button undo = new Button("Reset");
     Employee loggedInEmployee = null;
     Timereport editedReport;
     ReportsView reportsView;
@@ -54,9 +55,14 @@ public class ReportForm extends FormLayout {
         this.editedReport = null;
 
         if (PrincipalUtils.isAuthenticated()){
-            loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getName());
+            loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getUsername());
+            name.setItems(employeeService.findAll());
             name.setValue(loggedInEmployee.getEmployeeName());
-            name.setReadOnly(true);
+            if(!PrincipalUtils.isAdmin()){
+                name.setReadOnly(true);
+            } else {
+                name.setValue("");
+            }
         }
 
         // Provide selected class to determine behaviour
@@ -66,7 +72,6 @@ public class ReportForm extends FormLayout {
 
         saveButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         saveButton.addClickListener(e -> onSave());
-        Button undo = new Button("Reset");
         undo.getElement().setAttribute("size", "small");
         undo.addClickListener(e -> resetActivitySelection());
         HorizontalLayout activity = new HorizontalLayout(selectionsForActivity, undo);
@@ -85,8 +90,9 @@ public class ReportForm extends FormLayout {
         Activity activity = (Activity) this.selectionsForActivity.getValue(); //OBS!
         String activityID = activity.getActivityID();
         String comment = this.comment.getValue();
+        Employee employee = (Employee) name.getValue();
 
-        Timereport newReport = new Timereport(loggedInEmployee, amountHours, reportDate, comment, activityID);
+        Timereport newReport = new Timereport(employee, amountHours, reportDate, comment, activityID);
 
         if(loggedInEmployee == null)
             return;
@@ -101,6 +107,7 @@ public class ReportForm extends FormLayout {
             editedReport.setReportDate(this.reportDate.getValue().toString());
             editedReport.setActivityID(activity.getActivityID());
             editedReport.setComment(this.comment.getValue());
+            editedReport.setEmployee((Employee) name.getValue());
             timereportService.save(editedReport);
             Notification.show("Report Updated!");
 
@@ -135,8 +142,6 @@ public class ReportForm extends FormLayout {
         if(field.isEmpty())
             return;
 
-        System.out.println(field.getValue().getClass().getName());
-
         Class selection = field.getValue().getClass();
 
         if (selection.equals(Customer.class)){
@@ -149,7 +154,15 @@ public class ReportForm extends FormLayout {
             Project project = (Project) field.getValue();
             selectionsForActivity.setItems(activityService.findActivitiesForProject(project));
 
+
+
+
+            //-----
             field.setLabel(field.getLabel() + ": " + project.getProjectName().toUpperCase());
+
+
+
+
         } else if (selection.equals(Activity.class)){
             Activity activity = (Activity) field.getValue();
 
@@ -175,11 +188,21 @@ public class ReportForm extends FormLayout {
         reportDate.setReadOnly(true);
         amountHours.setReadOnly(true);
         comment.setReadOnly(true);
-
+        name.setReadOnly(true);
+        selectionsForActivity.setReadOnly(true);
+        undo.setEnabled(false);
         reportDate.setValue(localDate);
         amountHours.setValue(timereport.getAmountHours());
         comment.setValue(timereport.getComment());
+
+        Activity a = activityService.getActivityFromID(timereport.getActivityID());
+        Project p = projectService.getProjectFromID(a.getProject().getProjectID());
+        Customer c = customerService.getCustomerFromID(p.getCustomerID());
+
+        selectionsForActivity.setLabel(c.getCustomerName() + ": " + p.getProjectName() + ": " + a.getActivityName());
+        selectionsForActivity.setItems(activityService.findActivitiesForProject(p));
         selectionsForActivity.setValue(activityService.getActivityFromID(timereport.getActivityID()));
+        name.setValue(employeeService.getEmployeeFromID(timereport.getEmployeeID())); //kanske att denna krånglar för att boxen innehåller en sträng ist för en employee. EDIT: verkar funka ändå! EDIT: den funkade inte om man redigerade och tryckte save
         remove(saveButton);
         Button editButton = new Button("Edit");
         editButton.addClickListener(evt -> editReport(editButton));
@@ -190,6 +213,13 @@ public class ReportForm extends FormLayout {
         reportDate.setReadOnly(false);
         amountHours.setReadOnly(false);
         comment.setReadOnly(false);
+        selectionsForActivity.setReadOnly(false);
+        undo.setEnabled(true);
+
+        if(PrincipalUtils.isAdmin()){
+            name.setReadOnly(false);
+        }
+
         remove(editButton);
         add(saveButton);
     }
