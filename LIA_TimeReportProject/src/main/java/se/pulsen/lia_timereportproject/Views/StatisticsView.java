@@ -1,5 +1,7 @@
 package se.pulsen.lia_timereportproject.Views;
 
+import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.checkbox.CheckboxGroup;
 import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
@@ -12,10 +14,7 @@ import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
-import se.pulsen.lia_timereportproject.Entities.Activity;
-import se.pulsen.lia_timereportproject.Entities.Customer;
-import se.pulsen.lia_timereportproject.Entities.Project;
-import se.pulsen.lia_timereportproject.Entities.Timereport;
+import se.pulsen.lia_timereportproject.Entities.*;
 import se.pulsen.lia_timereportproject.Services.*;
 import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
@@ -25,55 +24,68 @@ import java.util.List;
 @AnonymousAllowed
 public class StatisticsView extends HorizontalLayout {
 
-    //Will contain a clickbased interface for retrieving filtered data.
+    CustomerService customerService;
+    ProjectService projectService;
+    ActivityService activityService;
+    EmployeeService employeeService;
 
-    CheckboxGroup<Customer> customer = new CheckboxGroup<>();
-    CheckboxGroup<Project> project = new CheckboxGroup<>();
-    CheckboxGroup<Activity> activity = new CheckboxGroup<>();
+    public StatisticsView(CustomerService customerService, ProjectService projectService, ActivityService activityService, EmployeeService employeeService){
+        this.customerService = customerService;
+        this.projectService = projectService;
+        this.activityService = activityService;
+        this.employeeService = employeeService;
 
-    public StatisticsView(@Autowired CustomerService customerService, @Autowired ProjectService projectService, @Autowired ActivityService activityService, @Autowired TimereportService timereportService, @Autowired EmployeeService employeeService){
+        CheckboxGroup<Customer> customers = new CheckboxGroup<>();
+        CheckboxGroup<Project> projects = new CheckboxGroup<>();
+        CheckboxGroup<Activity> activities = new CheckboxGroup<>();
+        CheckboxGroup<Employee> employees = new CheckboxGroup<>();
 
-        project.setVisible(false);
-        activity.setVisible(false);
-
-        List<CheckboxGroup> style = List.of(customer, project, activity);
-        style.forEach(c -> c.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL));
-
-        VerticalLayout selectionStats = new VerticalLayout();
-
-        customer.setLabel("Customer");
-        project.setLabel("Project");
-        activity.setLabel("Activity");
-
-        customer.setItems(customerService.findAll());
-
-        customer.addValueChangeListener(evt -> {
-            project.setItems(projectService.projectsForCustomer(evt.getValue().iterator().next().getCustomerID()));
-            project.setVisible(true);
-            testRender(customerService, selectionStats);
-        });
-
-        project.addValueChangeListener(evt -> {
-            activity.setItems(activityService.findActivitiesForProject(evt.getValue().iterator().next()));
-            activity.setVisible(true);
-        });
-
-        HorizontalLayout selectionContainer = new HorizontalLayout(customer, project, activity);
+        Accordion customersel = new Accordion();
+        Accordion projectsel = new Accordion();
+        Accordion activitysel = new Accordion();
+        Accordion employeesel = new Accordion();
 
 
-        add(selectionContainer, selectionStats);
 
+        Button renderStatsBtn = new Button("Render Statistics");
+        renderStatsBtn.addClickListener(evt -> renderStats());
+
+        //Choosing customer, project... (activity ? print(good!) : add)
+        customers.setItems(customerService.findAll());
+        customers.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+        customers.addValueChangeListener(c -> { // Break out into a method(Accordion acc, CheckboxGroup<E> chbxs)
+            customers.setEnabled(false);
+            customersel.close();
+            projects.setItems(projectService.projectsForCustomer(c.getValue().iterator().next().getCustomerID()));
+            projectsel.add("Projects", projects);
+        }); // Change so that the checked box can be unchecked, and all boxes enabled after unselecting.
+
+        if (projectsel.isVisible()){
+            projects.addValueChangeListener( c -> {
+                projects.setEnabled(false);
+                projectsel.close();
+                activities.setItems(activityService.findActivitiesForProject(c.getValue().iterator().next()));
+                activitysel.add("Activites", activities);
+            });
+        }
+
+
+        // Employee Selection for ADMINs
+        employees.setItems(employeeService.findAll());
+        employees.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+        employeesel.add("Employees", employees);
+
+
+        customersel.add("Customer", customers);
+
+        Div content = new Div();
+        content.add(customersel, projectsel, activitysel);
+        add(content);
     }
 
-    private void testRender(CustomerService customerService, VerticalLayout stats) {
-        Grid<Customer> grid = new Grid<>(Customer.class);
-        grid.setItems(customerService.findAll());
-        stats.add(grid);
-        //selectionStatistics.setItems(customerService.findAll());
-    }
+    private void renderStats() {
 
-    private List<Timereport> statsForCustomer(Customer customer, TimereportService timereportService, EmployeeService employeeService) {
-        List<Timereport> doMathOnThis = timereportService.getTimeSpentOnCustomer(customer.getCustomerID(), employeeService.findEmployeeByUsername(PrincipalUtils.getUsername()).getEmployeeID().toString());
-        return doMathOnThis;
+
+
     }
 }

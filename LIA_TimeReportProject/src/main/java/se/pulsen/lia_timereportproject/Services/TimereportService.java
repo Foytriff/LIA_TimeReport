@@ -19,6 +19,10 @@ public class TimereportService {
         return timereportRepo.save(timereport);
     }
 
+    public List<Timereport> findAll(){
+        return timereportRepo.findAll();
+    }
+
     public List<Timereport> getReportsForEmployee(Employee employee){
         return timereportRepo.findTimereportsByEmployee(employee);
     }

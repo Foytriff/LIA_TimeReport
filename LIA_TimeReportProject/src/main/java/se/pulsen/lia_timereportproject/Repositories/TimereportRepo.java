@@ -13,6 +13,9 @@ import java.util.List;
 public interface TimereportRepo extends JpaRepository<Timereport, Integer> {
     List<Timereport> findTimereportsByEmployee(Employee employee);
 
+    List<Timereport> findTimereportsByActivityID(String activityID);
+
+
     @Query(value = "SELECT * FROM Timereport WHERE EmployeeID = :empID AND ActivityID IN (SELECT ActivityID FROM Activity WHERE ProjectID IN \n" +
             "    (SELECT ProjectID FROM Project WHERE CustomerID IN \n" +
             "        (SELECT CustomerID FROM Customer WHERE CustomerID = :custID)))",
