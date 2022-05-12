@@ -30,7 +30,14 @@ public class QueryFromEverywhere {
     @Autowired
     TimereportRepo timereportRepo;
 
-    // Refractor methods used in statcard
+    @Autowired
+    TimereportService timereportService;
+
+    // Refractor methods used in statcard?
+
+    public TimereportService getTimereportService(){
+        return this.timereportService;
+    }
 
     public List<Timereport> getTimereportsForCustomer(String customerID){
 

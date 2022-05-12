@@ -22,26 +22,31 @@ import se.pulsen.lia_timereportproject.Entities.*;
 import se.pulsen.lia_timereportproject.Services.*;
 import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
+import javax.annotation.security.RolesAllowed;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Route(value = "/test", layout = MainView.class)
-@AnonymousAllowed
+@Route(value = "/statistics", layout = MainView.class)
+@RolesAllowed({"ADMIN", "USER"})
 public class StatisticsView extends HorizontalLayout {
 
     CustomerService customerService;
     ProjectService projectService;
     ActivityService activityService;
     EmployeeService employeeService;
+    TimereportService timereportService;
     QueryFromEverywhere queryFromEverywhere;
+    Div statCardsContainer = new Div();
 
-    public StatisticsView(CustomerService customerService, ProjectService projectService, ActivityService activityService, EmployeeService employeeService, QueryFromEverywhere queryFromEverywhere){
+    public StatisticsView(CustomerService customerService, ProjectService projectService, ActivityService activityService, EmployeeService employeeService, QueryFromEverywhere queryFromEverywhere, TimereportService timereportService){
         this.customerService = customerService;
+        this.timereportService = timereportService;
         this.projectService = projectService;
         this.activityService = activityService;
         this.employeeService = employeeService;
         this.queryFromEverywhere = queryFromEverywhere;
 
+        statCardsContainer.getElement().getStyle().set("flex-wrap", "wrap");
 
         // Creating UI components
         CheckboxGroup<Customer> customers = new CheckboxGroup<>();
@@ -56,7 +61,8 @@ public class StatisticsView extends HorizontalLayout {
         AtomicReference<Registration> renderBtnReg = new AtomicReference<>();
         renderBtnReg.set(renderStatsBtn.addClickListener(evt -> Notification.show("No selection")));
 
-
+        projectsel.getElement().getStyle().set("margin-left", "2rem");
+        activitysel.getElement().getStyle().set("margin-left", "4rem");
 
         //Setting up first selection (Customer)
         customers.setItems(customerService.findAll());
@@ -103,27 +109,36 @@ public class StatisticsView extends HorizontalLayout {
         }
 
 
-
-
-
-        // Employee Selection for ADMINs
-        employees.setItems(employeeService.findAll());
-        employees.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
-        employeesel.add("Employees", employees);
-
-
-
         // Adding components to a container and adding the container to the UI
         Div content = new Div();
-        content.add(customersel, projectsel, activitysel, renderStatsBtn);
+        content.add(customersel, projectsel, activitysel);
+
+        // Employee Selection for ADMINs
+        if (PrincipalUtils.getRole().equals("[ROLE_ADMIN]")){
+            employees.setItems(employeeService.findAll());
+            employees.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+            employees.addValueChangeListener( c -> {
+                employees.setEnabled(false);
+                renderBtnReg.get().remove();
+                renderBtnReg.set(renderStatsBtn.addClickListener(evt -> renderStats(c.getValue().iterator().next())));
+            });
+            employeesel.add("Employees", employees);
+            employeesel.close();
+            content.add(employeesel);
+        }
+
+        content.add(renderStatsBtn);
+
         add(content);
+
+        add(statCardsContainer);
     }
 
     private<E> void renderStats(E selection) {
-        StatCard customerCard = new StatCard(this, queryFromEverywhere, selection);
+        StatCard customerCard = new StatCard(this, queryFromEverywhere, timereportService, selection);
         // Add style for StatCard (it's a Div)
 
         // Adding the statistics to the UI
-        add(customerCard);
+        statCardsContainer.add(customerCard);
     }
 }

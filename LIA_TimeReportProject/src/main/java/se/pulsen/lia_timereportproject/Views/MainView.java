@@ -4,6 +4,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.notification.Notification;
@@ -51,9 +52,10 @@ public class MainView extends AppLayout {
 
         RouterLink employeeView = new RouterLink("Create Report", EmployeeView.class);
         RouterLink myReports = new RouterLink("My Reports", ReportsView.class);
+        RouterLink statistics = new RouterLink("Statistics", StatisticsView.class);
         RouterLink adminView = new RouterLink("Manage Employees", AdminView.class);
 
-        drawer.add(employeeView, myReports);
+        drawer.add(employeeView, myReports, statistics);
 
         if(PrincipalUtils.getRole().equals("[ROLE_ADMIN]")){
             myReports.setText("All Reports");
