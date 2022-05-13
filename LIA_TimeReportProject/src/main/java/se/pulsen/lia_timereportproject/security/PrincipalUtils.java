@@ -25,8 +25,8 @@ public class PrincipalUtils {
     }
 
     public static void logout(){
+        //UI.getCurrent().navigate(LoginView.class);
         new SecurityContextLogoutHandler().logout(VaadinServletRequest.getCurrent().getHttpServletRequest(), null, null);
-        UI.getCurrent().navigate(LoginView.class);
     }
 
 }

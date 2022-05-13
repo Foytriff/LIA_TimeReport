@@ -34,4 +34,8 @@ public class TimereportService {
     public List<Timereport> getReportsAdmin(){
         return timereportRepo.findAll();
     }
+
+    public void deleteTimereport(Timereport tr) {
+        timereportRepo.delete(tr);
+    }
 }

@@ -111,6 +111,7 @@ public class StatisticsView extends HorizontalLayout {
 
         // Adding components to a container and adding the container to the UI
         Div content = new Div();
+        content.getElement().getStyle().set("margin-left", "1rem");
         content.add(customersel, projectsel, activitysel);
 
         // Employee Selection for ADMINs

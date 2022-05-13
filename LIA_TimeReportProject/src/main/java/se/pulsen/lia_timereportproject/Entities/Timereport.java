@@ -44,8 +44,8 @@ public class Timereport {
 
     }
 
-    public String getTimereportID() {
-        return timereportID.toString();
+    public UUID getTimereportID() {
+        return timereportID;
     }
 
     public String getReportDate() {

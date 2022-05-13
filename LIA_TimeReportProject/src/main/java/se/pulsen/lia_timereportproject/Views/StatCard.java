@@ -65,10 +65,14 @@ public class StatCard extends Div{
 
             // Layout for holding employees for given customer
             VerticalLayout employeesForCustomer = new VerticalLayout();
-            qfew.getEmployeesForCustomer(customer.getCustomerID()).forEach(emp -> {
-                Span employeeName = new Span(emp.getEmployeeName());
-                employeesForCustomer.add(employeeName);
-            });
+            qfew.getEmployeesForCustomer(customer.getCustomerID())
+                    .stream()
+                    .map(Employee::getEmployeeName)
+                    .distinct()
+                    .forEach(emp -> {
+                        Span employeeName = new Span(emp);
+                        employeesForCustomer.add(employeeName);
+                    });
 
             Details employeesDetails = new Details("Employees", employeesForCustomer);
 
@@ -99,10 +103,14 @@ public class StatCard extends Div{
             Details activitiesDetails = new Details("Activities", activities);
 
             // Employees
-            qfew.getEmployeesForProject(project).forEach(emp -> {
-                Span employeeName = new Span(emp.getEmployeeName());
-                employees.add(employeeName);
-            });
+            qfew.getEmployeesForProject(project)
+                    .stream()
+                    .map(Employee::getEmployeeName)
+                    .distinct()
+                    .forEach(emp -> {
+                        Span employeeName = new Span(emp);
+                        employees.add(employeeName);
+                    });
             Details employeesDetails = new Details("Employees", employees);
 
             detailsContainer.add(activitiesDetails, employeesDetails);
@@ -128,10 +136,14 @@ public class StatCard extends Div{
             // Add projname and custname
             belongsToContainer.add(new Span("Customer: " + customer.getCustomerName()), new Span("Project: " + project.getProjectName()));
 
-            qfew.getEmployeesForActivity(activity).forEach(emp -> {
-                Span employeeName = new Span(emp.getEmployeeName());
-                employees.add(employeeName);
-            });
+            qfew.getEmployeesForActivity(activity)
+                    .stream()
+                    .map(Employee::getEmployeeName)
+                    .distinct()
+                    .forEach(emp -> {
+                        Span employeeName = new Span(emp);
+                        employees.add(employeeName);
+                    });
             // handle no assigned employees?
             Details employeesDetails = new Details("Employees", employees);
 

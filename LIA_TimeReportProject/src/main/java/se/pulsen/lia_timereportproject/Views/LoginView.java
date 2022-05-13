@@ -1,5 +1,6 @@
 package se.pulsen.lia_timereportproject.Views;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.login.LoginOverlay;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -16,9 +17,8 @@ public class LoginView extends Div implements BeforeEnterListener {
         loginOverlay.setDescription("gör det ja wooo");
         loginOverlay.setOpened(true);
         loginOverlay.setAction("login");
-
         add(loginOverlay);
-
+        UI.getCurrent().navigate(EmployeeView.class);
     }
 
 

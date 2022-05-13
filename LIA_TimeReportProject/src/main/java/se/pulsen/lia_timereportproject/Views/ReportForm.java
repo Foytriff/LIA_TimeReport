@@ -1,5 +1,6 @@
 package se.pulsen.lia_timereportproject.Views;
 
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -20,6 +21,7 @@ import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 public class ReportForm extends FormLayout {
@@ -57,13 +59,21 @@ public class ReportForm extends FormLayout {
         if (PrincipalUtils.isAuthenticated()){
             loggedInEmployee = employeeService.findEmployeeByUsername(PrincipalUtils.getUsername());
             name.setItems(employeeService.findAll());
-            name.setValue(loggedInEmployee.getEmployeeName());
+            name.setValue(loggedInEmployee);
             if(!PrincipalUtils.isAdmin()){
                 name.setReadOnly(true);
             } else {
                 name.setValue("");
             }
         }
+
+        name.setRequired(true);
+        selectionsForActivity.setRequired(true);
+        selectionsForActivity.setErrorMessage("Please provide: Customer, Project and Activity");
+        amountHours.setRequiredIndicatorVisible(true);
+        reportDate.setRequired(true);
+        amountHours.setMax(16);
+        amountHours.setMin(0);
 
         // Provide selected class to determine behaviour
         selectionsForActivity.addValueChangeListener(e -> {
@@ -85,6 +95,12 @@ public class ReportForm extends FormLayout {
 
     private void onSave() {
 
+        if (name.getValue() == null || selectionsForActivity.getValue() == null || amountHours.getValue() == null || reportDate.getValue() == null){
+            Notification.show("Please make sure to fill every required field");
+            return;
+        }
+
+
         double amountHours = this.amountHours.getValue();
         String reportDate = this.reportDate.getValue().toString();
         Activity activity = (Activity) this.selectionsForActivity.getValue(); //OBS!
@@ -102,6 +118,7 @@ public class ReportForm extends FormLayout {
             Notification notification = Notification.show("Report submitted!");
             notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             clearFields();
+
         } else {
             editedReport.setAmountHours(this.amountHours.getValue());
             editedReport.setReportDate(this.reportDate.getValue().toString());
@@ -124,7 +141,9 @@ public class ReportForm extends FormLayout {
     }
 
     private void clearFields() {
+        if (PrincipalUtils.isAdmin())
         name.clear();
+
         resetActivitySelection();
         reportDate.clear();
         amountHours.clear();
