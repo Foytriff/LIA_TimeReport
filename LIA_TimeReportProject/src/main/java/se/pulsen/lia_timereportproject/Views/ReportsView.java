@@ -22,6 +22,7 @@ import se.pulsen.lia_timereportproject.Services.*;
 import se.pulsen.lia_timereportproject.security.PrincipalUtils;
 
 import javax.annotation.security.PermitAll;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,8 +43,13 @@ public class ReportsView extends VerticalLayout {
     QueryFromEverywhere queryFromEverywhere;
 
     List<Timereport> reportsToRender = new ArrayList<>();
+
     Employee loggedInEmployee = null;
     Grid<Timereport> grid = new Grid<>(Timereport.class, false);
+
+    List<Timereport> employeeFilteredReportList = new ArrayList<>();
+    List<Timereport> noEmployeeFilteredReportList = new ArrayList<>();
+    List<Employee> selectedEmployees = new ArrayList<>();
 
     public ReportsView(EmployeeService employeeService, TimereportService timereportService, QueryFromEverywhere queryFromEverywhere, CustomerService customerService, ProjectService projectService, ActivityService activityService){
         this.employeeService = employeeService;
@@ -96,18 +102,23 @@ public class ReportsView extends VerticalLayout {
         newFilter.setVisible(false);
         newFilter.getElement().getStyle().set("padding-left", "1rem");
         newFilter.addClickListener(evt -> {
-           filterCustomer.clear();
-           filterProject.clear();
-           filterActivity.clear();
-           filterEmployee.clear();
-           reportsToRender.clear();
-           filterCustomer.setReadOnly(false);
-           filterProject.setReadOnly(false);
-           filterActivity.setReadOnly(false);
-           filterEmployee.setReadOnly(false);
-           newFilter.setVisible(false);
+            reportsToRender = new ArrayList<>();
+            filterCustomer.clear();
+            filterProject.clear();
+            filterActivity.clear();
+            filterEmployee.clear();
+            reportsToRender.clear();
+            filterCustomer.setReadOnly(false);
+            filterProject.setReadOnly(false);
+            filterActivity.setReadOnly(false);
+            filterEmployee.setReadOnly(false);
+            employeeFilteredReportList = new ArrayList<>();
+            noEmployeeFilteredReportList = new ArrayList<>();
+            selectedEmployees = new ArrayList<>();
+            newFilter.setVisible(false);
         });
 
+        // cust -> emp1 -> emp2 == reports for emp1 only (fix so both emps trs shows)
 
         AtomicReference<Registration> currentClick = new AtomicReference<>(renderTrBtn.addClickListener(evt -> Notification.show("No selection")));
 
@@ -121,30 +132,35 @@ public class ReportsView extends VerticalLayout {
 
         employeesel.close();
         filterEmployee.setItems(employeeService.findAll());
+        // EMPLOYEE FILTER
         filterEmployee.addValueChangeListener(evt -> {
                 currentClick.get().remove();
+                // sets renderbutton when emp is selected
                 currentClick.set(renderTrBtn.addClickListener( e -> {
                     grid.setItems(reportsToRender);
                     filterCustomer.setReadOnly(true);
                     filterProject.setReadOnly(true);
                     filterActivity.setReadOnly(true);
                     filterEmployee.setReadOnly(true);
-
                     newFilter.setVisible(true);
                 }));
 
-                List<Timereport> employeeFilteredReportList = reportsToRender;
-                List<Employee> selectedEmployees = evt.getValue().stream().toList();
+                reportsToRender = new ArrayList<>();
 
+                employeeFilteredReportList = noEmployeeFilteredReportList;
+                selectedEmployees = evt.getValue().stream().toList();
+
+                // Sets reports if no customer is selected
                 if (filterCustomer.getValue().stream().allMatch(sel -> sel == null)){
-                    if (reportsToRender != null || !reportsToRender.isEmpty())
-                        reportsToRender.removeAll(reportsToRender);
+                    //if (!(reportsToRender == null || reportsToRender.isEmpty()))        // this does nothing... I think
+                    //    reportsToRender.removeAll(reportsToRender);
 
                     selectedEmployees.forEach(selection -> {
                     reportsToRender.addAll(timereportService.getReportsForEmployee(selection));
                     });
                 } else {
-                        reportsToRender = employeeFilteredReportList //fix multiple employees on order: custoemr select -> one emp select, two emp select
+                    // Adding employee filter to already filtered list
+                        reportsToRender = employeeFilteredReportList //fix multiple employees on order: custoemr select -> one emp select, two emp select EDIT: added a new list w/o empFilter
                                 .stream()
                                 .filter(tr -> {
                                     boolean match = selectedEmployees.stream().anyMatch(emp -> tr.getEmployeeID().equals(emp.getEmployeeID()));
@@ -155,15 +171,41 @@ public class ReportsView extends VerticalLayout {
         });
 
 
+        // CUSTOMER FILTER
         filterCustomer.setRequired(true);
         filterCustomer.addValueChangeListener(evt -> {
+            // If customer is unselected
             if (evt.getValue().isEmpty() || evt.getValue() == null){
-                grid.setItems(); // Probably more logic for removing projsel and actsel etc...
+                grid.setItems();
             }
 
             List<Project> projectsForCustomers = new ArrayList<>();
             evt.getValue().forEach(selection -> {
-                reportsToRender.addAll(queryFromEverywhere.getTimereportsForCustomer(selection.getCustomerID()));
+
+                // Code for employee selection prior to customer sel
+                if(selectedEmployees.size() > 0){
+                    List<Timereport> temp = new ArrayList<>();
+                    temp.addAll(queryFromEverywhere.getTimereportsForCustomer(selection.getCustomerID()));
+                    temp = temp
+                            .stream()
+                            .filter(tr -> {
+
+                                for(Employee emp : selectedEmployees){
+                                    if(tr.getEmployeeID().equals(emp.getEmployeeID())){
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            })
+                            .distinct()
+                            .collect(Collectors.toList());
+                    reportsToRender.removeAll(reportsToRender);
+                    reportsToRender.addAll(temp);
+                } else {
+                    // if no emp is selected, when selecting customer
+                    reportsToRender.addAll(queryFromEverywhere.getTimereportsForCustomer(selection.getCustomerID()));
+                    noEmployeeFilteredReportList.addAll(queryFromEverywhere.getTimereportsForCustomer(selection.getCustomerID())); // bonus list
+                }
                 projectService.projectsForCustomer(selection.getCustomerID()).forEach( project -> {
                     projectsForCustomers.add(project);
                 });
@@ -180,12 +222,38 @@ public class ReportsView extends VerticalLayout {
             filterProject.setItems(projectsForCustomers);
         });
 
+
+        // PROJECT FILTER
         filterProject.setRequired(true);
         filterProject.addValueChangeListener(evt -> {
+
             List<Activity> activitiesForProjects = new ArrayList<>();
-            reportsToRender.removeAll(reportsToRender);
+            reportsToRender = new ArrayList<>();
+            // old: reportsToRender.removeAll(reportsToRender);
             evt.getValue().forEach(selection -> {
-                reportsToRender.addAll(queryFromEverywhere.getTimereportsForProject(selection));
+
+                if(selectedEmployees.size() > 0){
+                    List<Timereport> temp = new ArrayList<>();
+                    temp.addAll(queryFromEverywhere.getTimereportsForProject(selection));
+                    temp = temp
+                            .stream()
+                            .filter(tr -> {
+
+                                for(Employee emp : selectedEmployees){
+                                    if(tr.getEmployeeID().equals(emp.getEmployeeID())){
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            })
+                            .distinct()
+                            .collect(Collectors.toList());
+                    reportsToRender.removeAll(reportsToRender);
+                    reportsToRender.addAll(temp);
+                } else {
+                    reportsToRender.addAll(queryFromEverywhere.getTimereportsForProject(selection));
+                }
+
                 activityService.findActivitiesForProject(selection).forEach( activity -> {
                     activitiesForProjects.add(activity);
                 });
@@ -193,10 +261,33 @@ public class ReportsView extends VerticalLayout {
             filterActivity.setItems(activitiesForProjects);
         });
 
+        // ACTIVITY FILTER
         filterActivity.addValueChangeListener(evt -> {
-            reportsToRender.removeAll(reportsToRender);
+            reportsToRender = new ArrayList<>();
            evt.getValue().forEach(selection -> {
-               reportsToRender.addAll(queryFromEverywhere.getTimereportsForActivity(selection));
+
+               if(selectedEmployees.size() > 0){
+                   List<Timereport> temp = new ArrayList<>();
+                   temp.addAll(queryFromEverywhere.getTimereportsForActivity(selection));
+                   temp = temp
+                           .stream()
+                           .filter(tr -> {
+
+                               for(Employee emp : selectedEmployees){
+                                   if(tr.getEmployeeID().equals(emp.getEmployeeID())){
+                                       return true;
+                                   }
+                               }
+                               return false;
+                           })
+                           .distinct()
+                           .collect(Collectors.toList());
+                   reportsToRender.removeAll(reportsToRender);
+                   reportsToRender.addAll(temp);
+               } else {
+                   reportsToRender.addAll(queryFromEverywhere.getTimereportsForActivity(selection));
+               }
+               noEmployeeFilteredReportList.addAll(queryFromEverywhere.getTimereportsForActivity(selection));
            });
         });
 
