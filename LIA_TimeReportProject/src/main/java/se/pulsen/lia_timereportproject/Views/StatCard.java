@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import se.pulsen.lia_timereportproject.Entities.*;
 import se.pulsen.lia_timereportproject.Services.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -178,6 +179,80 @@ public class StatCard extends Div{
                         timereportContainer.add(trDetails);
                     });
 
+            // Customer stats
+            VerticalLayout customerContainer = new VerticalLayout();
+            // Loading data
+            List<Customer> customers = qfew.getCustomersForEmployee(employee);
+            List<Timereport> customerStats = new ArrayList<>();
+            for(Customer customer : customers){
+                customerStats.addAll(qfew.getTimereportsForCustomer(customer.getCustomerID()));
+            }
+
+            customers.forEach(customer -> {
+                HorizontalLayout customerDetils = new HorizontalLayout();
+                Span customerName = new Span("Customer: " + customer.getCustomerName());
+                double empTimeSpentOnCustomer = customerStats
+                        .stream()
+                        .filter(tr -> tr.getEmployeeID().equals(employee.getEmployeeID()))
+                        .filter(tr -> qfew.getCustomerFromTimereport(tr).equals(customer))
+                        .mapToDouble(Timereport::getAmountHours)
+                        .summaryStatistics()
+                        .getSum();
+
+
+
+                Span timeSpent = new Span("Time Spent: " + empTimeSpentOnCustomer);
+                customerDetils.add(customerName, timeSpent);
+                customerContainer.add(customerDetils);
+            });
+
+            // Project stats
+            VerticalLayout projectContainer = new VerticalLayout();
+            List<Project> projects = qfew.getProjectsForEmployee(employee);
+            List<Timereport> projectStats = new ArrayList<>();
+            for(Project project : projects){
+                projectStats.addAll(qfew.getTimereportsForProject(project));
+            }
+
+            projects.forEach(project -> {
+                HorizontalLayout projectDetails = new HorizontalLayout();
+                Span projectName = new Span("Project: " + project.getProjectName());
+                double empTimeSpentOnProject = projectStats
+                        .stream()
+                        .filter(tr -> tr.getEmployeeID().equals(employee.getEmployeeID()))
+                        .filter(tr -> qfew.getProjectFromTimereport(tr).equals(project))
+                        .mapToDouble(Timereport::getAmountHours)
+                        .summaryStatistics()
+                        .getSum();
+
+                Span timeSpent = new Span("Time Spent: " + empTimeSpentOnProject);
+                projectDetails.add(projectName, timeSpent);
+                projectContainer.add(projectDetails);
+            });
+            // Activity stats
+            VerticalLayout activityContainer = new VerticalLayout();
+            List<Activity> activities = qfew.getActivitiesForEmployee(employee);
+            List<Timereport> activityStats = new ArrayList<>();
+            for(Activity activity : activities){
+                activityStats.addAll(qfew.getTimereportsForActivity(activity));
+            }
+
+            activities.forEach(activity -> {
+                HorizontalLayout activityDetails = new HorizontalLayout();
+                Span activtiyName = new Span("Activity: " + activity.getActivityName());
+                double empTimeSpentOnActivtiy = activityStats
+                        .stream()
+                        .filter(tr -> tr.getEmployeeID().equals(employee.getEmployeeID()))
+                        .filter(tr -> qfew.getActivityFromTimereport(tr).equals(activity))
+                        .mapToDouble(Timereport::getAmountHours)
+                        .summaryStatistics()
+                        .getSum();
+
+                Span timeSpent = new Span("Time Spent: " + empTimeSpentOnActivtiy);
+                activityDetails.add(activtiyName, timeSpent);
+                activityContainer.add(activityDetails);
+            });
+
             Scroller timereportsScroller = new Scroller(timereportContainer);
 
             // TABS for TIMEREPORTS, CUSTOMERS, PROJECT, ACTIVITIES
@@ -201,8 +276,21 @@ public class StatCard extends Div{
 
                 switch (tabSelection){
                     case "Tab{Timereports}":
+                        employeeCard.removeAll();
                         employeeCard.add(timereportContainer);
                         employeeCard.getElement().setAttribute("content", "timereports");
+                        break;
+                    case "Tab{Customers}":
+                        employeeCard.removeAll();
+                        employeeCard.add(customerContainer);
+                        break;
+                    case "Tab{Projects}":
+                        employeeCard.removeAll();
+                        employeeCard.add(projectContainer);
+                        break;
+                    case "Tab{Activities}":
+                        employeeCard.removeAll();
+                        employeeCard.add(activityContainer);
                         break;
                     default:
                         employeeCard.add(timereportsScroller);
@@ -211,14 +299,14 @@ public class StatCard extends Div{
             });
 
             // with initial selection
-            employeeCard.add(employeeTabs, timereportsScroller);
+            employeeCard.add(timereportsScroller);
             Div employeeInfo = new Div();
             employeeInfo.add(new Label("Employee: " + employee.getEmployeeName()));
 
             // Set emp label to only take up space needed.
             employeeInfo.getElement().getStyle().set("border", "solid 1px grey").set("flex-grow", "0").set("padding", ".2rem");
 
-            statsContainer.add(employeeCard, employeeInfo);
+            statsContainer.add(employeeTabs, employeeCard, employeeInfo);
             statsContainer.getElement().getChild(1).getStyle().set("position", "relative").set("bottom", "0");
         }
 

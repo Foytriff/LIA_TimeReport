@@ -33,10 +33,83 @@ public class QueryFromEverywhere {
     @Autowired
     TimereportService timereportService;
 
+    @Autowired
+    ProjectService projectService;
+    @Autowired
+    CustomerService customerService;
+
+    @Autowired
+    ActivityService activityService;
+
     // Refractor methods used in statcard?
 
     public TimereportService getTimereportService(){
         return this.timereportService;
+    }
+
+    public List<Customer> getCustomersForEmployee(Employee employee){
+        List<Timereport> reportsToFilterFrom = timereportService.findAll();
+        reportsToFilterFrom = reportsToFilterFrom
+                .stream()
+                .filter(tr -> tr.getEmployeeID().equals(employee.getEmployeeID()))
+                .collect(Collectors.toList());
+
+        List<Customer> customers = reportsToFilterFrom
+                .stream()
+                .map(tr -> activityRepo.findActivityByActivityID(tr.getActivityID()).orElseThrow())
+                .map(activity -> projectRepo.findProjectByProjectID(activity.getProject().getProjectID()).orElseThrow())
+                .map(project -> customerRepo.findCustomerByCustomerID(project.getCustomerID()).orElseThrow())
+                .distinct()
+                .collect(Collectors.toList());
+        return customers;
+    }
+
+    public List<Project> getProjectsForEmployee(Employee employee){
+        List<Timereport> reportsToFilterFrom = timereportService.findAll();
+        reportsToFilterFrom = reportsToFilterFrom
+                .stream()
+                .filter(tr -> tr.getEmployeeID().equals(employee.getEmployeeID()))
+                .collect(Collectors.toList());
+
+        List<Project> projects = reportsToFilterFrom
+                .stream()
+                .map(tr -> activityRepo.findActivityByActivityID(tr.getActivityID()).orElseThrow())
+                .map(activity -> projectRepo.findProjectByProjectID(activity.getProject().getProjectID()).orElseThrow())
+                .distinct()
+                .collect(Collectors.toList());
+
+        return projects;
+    }
+
+    public List<Activity> getActivitiesForEmployee(Employee employee){
+        List<Timereport> reportsToFilterFrom = timereportService.findAll();
+        reportsToFilterFrom = reportsToFilterFrom
+                .stream()
+                .filter(tr -> tr.getEmployeeID().equals(employee.getEmployeeID()))
+                .collect(Collectors.toList());
+
+        List<Activity> activities = reportsToFilterFrom
+                .stream()
+                .map(tr -> activityRepo.findActivityByActivityID(tr.getActivityID()).orElseThrow())
+                .distinct()
+                .collect(Collectors.toList());
+
+        return activities;
+    }
+
+    public Customer getCustomerFromTimereport(Timereport tr){
+        Activity activity = activityRepo.findActivityByActivityID(tr.getActivityID()).orElseThrow();
+        Project project = projectRepo.findProjectByProjectID(activity.getProject().getProjectID()).orElseThrow();
+        return customerRepo.findCustomerByCustomerID(project.getCustomerID()).orElseThrow();
+    }
+
+    public Project getProjectFromTimereport(Timereport tr){
+        Activity activity = activityRepo.findActivityByActivityID(tr.getActivityID()).orElseThrow();
+        return  projectRepo.findProjectByProjectID(activity.getProject().getProjectID()).orElseThrow();
+    }
+
+    public Activity getActivityFromTimereport(Timereport tr){
+        return  activityRepo.findActivityByActivityID(tr.getActivityID()).orElseThrow();
     }
 
     public List<Timereport> getTimereportsForCustomer(String customerID){

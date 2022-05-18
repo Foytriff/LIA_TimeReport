@@ -1,6 +1,7 @@
 package se.pulsen.lia_timereportproject.Entities;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 public class Activity {
@@ -60,5 +61,18 @@ public class Activity {
     @Override
     public String toString() {
         return activityName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Activity activity = (Activity) o;
+        return activityID.equals(activity.activityID);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(activityID);
     }
 }
