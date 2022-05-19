@@ -25,7 +25,7 @@ public class MainView extends AppLayout {
         // Adding navbar
         HorizontalLayout navbar = new HorizontalLayout();
         VerticalLayout drawer = new VerticalLayout();
-        H1 navbarTitle = new H1("My page");
+        H1 navbarTitle = new H1("Timereports");
         Button loginButton = new Button("Login", evt -> UI.getCurrent().navigate(LoginView.class));
 
         Button logoutButton = new Button("Logout", evt -> PrincipalUtils.logout());
